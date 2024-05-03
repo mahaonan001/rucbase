@@ -242,6 +242,7 @@ TEST_F(BufferPoolManagerTest, MultipleFilesTest) {
             // check disk: disk data == mock data
             disk_manager_->read_page(fd, page_no, buf, PAGE_SIZE);  // read page from disk (disk -> buf)
             char *mock_buf = &mock[fd][page_no * PAGE_SIZE];        // get mock address in (fd,page_no)
+            // std::cout<<"buf: "<<sizeof(buf)<<" mock_buf: "<<sizeof(mock_buf)<<std::endl;
             EXPECT_EQ(memcmp(buf, mock_buf, PAGE_SIZE), 0);
             // check disk: disk data == page data
             Page *page = buffer_pool_manager->fetch_page(PageId{fd, page_no});
