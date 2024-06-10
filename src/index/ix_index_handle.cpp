@@ -22,8 +22,16 @@ int IxNodeHandle::lower_bound(const char *target) const {
     // Todo:
     // 查找当前节点中第一个大于等于target的key，并返回key的位置给上层
     // 提示: 可以采用多种查找方式，如顺序遍历、二分查找等；使用ix_compare()函数进行比较
-
-    return -1;
+     int l = 0, r = this->page_hdr->num_key;
+    while(l < r) {
+        int mid = (l + r) / 2;
+        if(ix_compare(get_key(mid), target, file_hdr->col_types_, file_hdr->col_lens_) >= 0) {
+            r = mid;
+        } else {
+            l = mid + 1;
+        }
+    }
+    return l;
 }
 
 /**
@@ -36,8 +44,16 @@ int IxNodeHandle::upper_bound(const char *target) const {
     // Todo:
     // 查找当前节点中第一个大于target的key，并返回key的位置给上层
     // 提示: 可以采用多种查找方式：顺序遍历、二分查找等；使用ix_compare()函数进行比较
-
-    return -1;
+    int l = 1, r = this->page_hdr->num_key;
+    while(l < r) {
+      int mid = (l + r) / 2;
+        if(ix_compare(get_key(mid), target, file_hdr->col_types_, file_hdr->col_lens_) > 0) {
+            r = mid;
+        } else {
+            l = mid + 1;
+        }
+    }
+    return l;
 }
 
 /**
@@ -54,8 +70,12 @@ bool IxNodeHandle::leaf_lookup(const char *key, Rid **value) {
     // 2. 判断目标key是否存在
     // 3. 如果存在，获取key对应的Rid，并赋值给传出参数value
     // 提示：可以调用lower_bound()和get_rid()函数。
-
-    return false;
+    int key_pos = lower_bound(key);
+    if(key_pos == get_size()|| ix_compare(key, get_key(key_pos), file_hdr->col_types_, file_hdr->col_lens_) != 0) {
+      return false;
+    }
+    *value = get_rid(key_pos);
+    return true;
 }
 
 /**
@@ -68,8 +88,8 @@ page_id_t IxNodeHandle::internal_lookup(const char *key) {
     // 1. 查找当前非叶子节点中目标key所在孩子节点（子树）的位置
     // 2. 获取该孩子节点（子树）所在页面的编号
     // 3. 返回页面编号
-
-    return -1;
+    int key_pos = upper_bound(key) - 1;// 应该要减1
+    return value_at(key_pos);
 }
 
 /**
@@ -92,7 +112,21 @@ void IxNodeHandle::insert_pairs(int pos, const char *key, const Rid *rid, int n)
     // 2. 通过key获取n个连续键值对的key值，并把n个key值插入到pos位置
     // 3. 通过rid获取n个连续键值对的rid值，并把n个rid值插入到pos位置
     // 4. 更新当前节点的键数量
-
+//     int size = get_size();
+//     if(!(pos >= 0 && pos <= get_size())){
+// 	    return;
+//     }
+//     // 腾出空间
+//     for(int i = size - 1; i >= pos; --i) {
+//       set_key(i + n, get_key(i));
+//       set_rid(i + n, *get_rid(i));
+//     }
+//     // 插入
+//     for(int i = 0; i < n; ++i) {
+//       set_key(pos + i, key + file_hdr->col_lens_ * i); //迭代获取新的key
+//       set_rid(pos + i, rid[i]);
+//     }
+//     get_size(size + n);
 }
 
 /**
