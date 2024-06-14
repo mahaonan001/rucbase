@@ -112,21 +112,21 @@ void IxNodeHandle::insert_pairs(int pos, const char *key, const Rid *rid, int n)
     // 2. 通过key获取n个连续键值对的key值，并把n个key值插入到pos位置
     // 3. 通过rid获取n个连续键值对的rid值，并把n个rid值插入到pos位置
     // 4. 更新当前节点的键数量
-//     int size = get_size();
-//     if(!(pos >= 0 && pos <= get_size())){
-// 	    return;
-//     }
-//     // 腾出空间
-//     for(int i = size - 1; i >= pos; --i) {
-//       set_key(i + n, get_key(i));
-//       set_rid(i + n, *get_rid(i));
-//     }
-//     // 插入
-//     for(int i = 0; i < n; ++i) {
-//       set_key(pos + i, key + file_hdr->col_lens_ * i); //迭代获取新的key
-//       set_rid(pos + i, rid[i]);
-//     }
-//     get_size(size + n);
+    int size = get_size();
+    if(!(pos >= 0 && pos <= size)){
+	    return;
+    }
+    // 腾出空间
+    for(int i = size - 1; i >= pos; --i) {
+      set_key(i + n, get_key(i));
+      set_rid(i + n, *get_rid(i));
+    }
+    // 插入
+    for(int i = 0; i < n; ++i) {
+      set_key(pos + i, (key + i * file_hdr->col_tot_len_ )); //迭代获取新的key keys + key_idx * file_hdr->col_tot_len_
+      set_rid(pos + i, rid[i]);
+    }
+    set_size(size + n);
 }
 
 /**
@@ -142,8 +142,11 @@ int IxNodeHandle::insert(const char *key, const Rid &value) {
     // 2. 如果key重复则不插入
     // 3. 如果key不重复则插入键值对
     // 4. 返回完成插入操作之后的键值对数量
-
-    return -1;
+    int insert_pos = lower_bound(key);
+    if(ix_compare(key, get_key(insert_pos), file_hdr->col_types_, file_hdr->col_lens_) != 0) {
+      insert_pair(insert_pos, key, value);
+    }
+    return get_size();
 }
 
 /**
@@ -156,7 +159,11 @@ void IxNodeHandle::erase_pair(int pos) {
     // 1. 删除该位置的key
     // 2. 删除该位置的rid
     // 3. 更新结点的键值对数量
-
+    for(int i = pos; i < get_size(); ++i) {
+      set_key(i, get_key(i + 1));
+      set_rid(i, *get_rid(i + 1));
+    }
+    set_size(get_size() - 1);
 }
 
 /**
@@ -170,8 +177,12 @@ int IxNodeHandle::remove(const char *key) {
     // 1. 查找要删除键值对的位置
     // 2. 如果要删除的键值对存在，删除键值对
     // 3. 返回完成删除操作后的键值对数量
-
-    return -1;
+    int remove_pos = lower_bound(key);
+    if(ix_compare(key, get_key(remove_pos), file_hdr->col_types_, file_hdr->col_lens_) == 0) {
+      erase_pair(remove_pos);
+    }
+    // 注意，这里不需要SetSize()!
+    return get_size();
 }
 
 IxIndexHandle::IxIndexHandle(DiskManager *disk_manager, BufferPoolManager *buffer_pool_manager, int fd)
@@ -205,6 +216,7 @@ std::pair<IxNodeHandle *, bool> IxIndexHandle::find_leaf_page(const char *key, O
     // 2. 从根节点开始不断向下查找目标key
     // 3. 找到包含该key值的叶子结点停止查找，并返回叶子节点
 
+    
     return std::make_pair(nullptr, false);
 }
 
