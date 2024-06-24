@@ -22,7 +22,7 @@ int IxNodeHandle::lower_bound(const char *target) const {
     // Todo:
     // 查找当前节点中第一个大于等于target的key，并返回key的位置给上层
     // 提示: 可以采用多种查找方式，如顺序遍历、二分查找等；使用ix_compare()函数进行比较
-     int l = 0, r = this->page_hdr->num_key;
+    int l = 0, r = this->page_hdr->num_key;
     while(l < r) {
         int mid = (l + r) / 2;
         if(ix_compare(get_key(mid), target, file_hdr->col_types_, file_hdr->col_lens_) >= 0) {
@@ -213,9 +213,12 @@ std::pair<IxNodeHandle *, bool> IxIndexHandle::find_leaf_page(const char *key, O
                                                             Transaction *transaction, bool find_first) {
     // Todo:
     // 1. 获取根节点
+    
+
     // 2. 从根节点开始不断向下查找目标key
     // 3. 找到包含该key值的叶子结点停止查找，并返回叶子节点
 
+    
     
     return std::make_pair(nullptr, false);
 }
